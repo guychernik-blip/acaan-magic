@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculated ACAAN</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        select, input, button {
+            font-size: 18px;
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* אזור ההצצה הגדול */
+        #result-display {
+            font-size: 120px; /* פונט ענק להצצה מהירה */
+            font-weight: bold;
+            color: #00ff00; /* צבע בולט בחושך */
+            margin-top: 40px;
+            min-height: 150px;
+        }
+        .setup-section {
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="setup-section">
+        <h3>הזנת נתונים (עבורך או עבור סייען)</h3>
+        
+        <label for="card-select">בחר קלף:</label>
+        <select id="card-select">
+            </select>
+
+        <label for="target-number">המספר שהצופה בחר (1-52):</label>
+        <input type="number" id="target-number" min="1" max="52" placeholder="למשל: 22">
+
+        <button onclick="calculateCut()">חשב חיתוך</button>
+    </div>
+
+    <div id="result-display">--</div>
+</div>
+
+<script>
+// המוח של האפליקציה ייכנס כאן בשלב הבא
+</script>
+
+</body>
+</html>
