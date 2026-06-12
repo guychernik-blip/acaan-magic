@@ -3,31 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון קסם</title>
+    <title>מחשבון ACAAN</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 20px;
         }
-        /* עיצוב התראה מזויפת בסגנון הודעה בנייד */
+        /* עיצוב התראה שדומה יותר להתראת דחיפה (Push) בנייד */
         #fake-notification {
             position: fixed;
             top: -100px;
             left: 5%;
             width: 90%;
-            background-color: #25D366; /* צבע ירוק של ווטסאפ */
+            background-color: #2b2b2b;
             color: white;
             padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            font-size: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            font-size: 20px;
             font-weight: bold;
-            text-align: center;
-            transition: top 0.5s ease; /* אנימציית החלקה */
+            text-align: right;
+            transition: top 0.4s ease-out;
             z-index: 1000;
+            border-left: 5px solid #25D366; /* פס ירוק קטן כדי לרמוז על ווטסאפ */
         }
         .container {
             max-width: 400px;
@@ -43,7 +44,7 @@
             box-sizing: border-box;
         }
         button {
-            background-color: #007BFF;
+            background-color: #0A84FF;
             color: white;
             font-weight: bold;
         }
@@ -54,23 +55,21 @@
 <div id="fake-notification">--</div>
 
 <div class="container">
-    <label>איזה קלף?</label>
+    <label>קלף נבחר:</label>
     <select id="card-select"></select>
 
-    <label>איזה מספר?</label>
+    <label>מספר נבחר (1-52):</label>
     <input type="number" id="target-number" placeholder="לדוגמה: 22">
 
-    <button onclick="calculateAndNotify()">שלח נתונים</button>
+    <button onclick="calculateAndNotify()">שגר חישוב</button>
 </div>
 
 <script>
-// סדר הקלפים (Mnemonica)
 const mnemonica = [
     "", "4 תלתן", "2 לב", "7 יהלום", "3 תלתן", "4 לב", "6 יהלום", "אס תלתן", "5 לב", "9 עלה", "2 עלה", "מלכה לב", "3 יהלום", "מלכה תלתן", "8 לב", "6 עלה", "5 עלה", "9 לב", "מלך תלתן", "2 יהלום", "נסיך לב", "3 עלה", "8 עלה", "6 לב", "10 תלתן", "5 יהלום", "מלך יהלום",
     "2 תלתן", "3 לב", "8 יהלום", "5 תלתן", "מלך עלה", "נסיך יהלום", "8 תלתן", "10 לב", "מלך יהלום", "נסיך תלתן", "7 עלה", "10 יהלום", "אס לב", "4 עלה", "7 לב", "4 יהלום", "אס תלתן", "9 תלתן", "נסיך עלה", "מלכה יהלום", "7 תלתן", "מלכה עלה", "10 עלה", "6 תלתן", "אס יהלום", "9 יהלום"
 ];
 
-// מילוי רשימת הקלפים
 const selectEl = document.getElementById('card-select');
 for (let i = 1; i <= 52; i++) {
     let option = document.createElement('option');
@@ -79,29 +78,9 @@ for (let i = 1; i <= 52; i++) {
     selectEl.appendChild(option);
 }
 
-// יצירת מנגנון צליל
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioCtx = new AudioContext();
+// קובץ אודיו של צליל התראה קלאסי של אייפון
+const iphoneSound = new Audio('https://www.myinstants.com/media/sounds/iphone-sms.mp3');
 
-function playNotificationSound() {
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    osc.type = 'sine'; // צליל נקי
-    osc.frequency.setValueAtTime(800, audioCtx.currentTime); // גובה הצליל
-    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); // אורך הצליל
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.3);
-}
-
-// הפעולה שקורית כשלוחצים על הכפתור
 function calculateAndNotify() {
     const cardStackPos = parseInt(selectEl.value);
     const targetNum = parseInt(document.getElementById('target-number').value);
@@ -111,24 +90,32 @@ function calculateAndNotify() {
         return;
     }
 
-    // חישוב המיקום לחיתוך
-    let cutPosition = cardStackPos - targetNum + 1;
-    if (cutPosition <= 0) {
-        cutPosition += 52;
-    }
+    // חישוב כמות הקלפים להורדה מראש החבילה
+    let cutAmount = (cardStackPos - targetNum + 52) % 52;
+    
+    // איתור קלף המפתח אליו צריך לחתוך (הקלף שיהיה בתחתית החבילה)
+    let cutCardIndex = cutAmount === 0 ? 52 : cutAmount;
+    let cutCardName = mnemonica[cutCardIndex];
 
-    // הפעלת הצליל
-    playNotificationSound();
+    // שחרור נעילת הסאונד של הדפדפן (חובה באייפונים כדי שהצליל יעבוד אחרי השהיה)
+    iphoneSound.load();
 
-    // הקפצת "הודעת הווטסאפ" המזויפת
-    const notification = document.getElementById('fake-notification');
-    notification.innerText = "הודעה חדשה: חתוך את החפיסה למיקום " + cutPosition;
-    notification.style.top = "20px"; // מחליק את ההודעה פנימה
-
-    // העלמת ההודעה אחרי 5 שניות
+    // הטיימר: מחכה 5 שניות (5000 מילי-שניות) לפני הביצוע
     setTimeout(() => {
-        notification.style.top = "-100px";
-    }, 5000);
+        // הפעלת הצליל
+        iphoneSound.play().catch(e => console.log("Sound blocked:", e));
+
+        // בניית ההודעה: למשל "3 - 7 יהלום"
+        const notification = document.getElementById('fake-notification');
+        notification.innerText = "WhatsApp: " + cutAmount + " - " + cutCardName;
+        notification.style.top = "20px";
+
+        // העלמת ההודעה אחרי 5 שניות נוספות
+        setTimeout(() => {
+            notification.style.top = "-100px";
+        }, 5000);
+        
+    }, 5000); 
 }
 </script>
 
