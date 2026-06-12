@@ -12,7 +12,6 @@
             margin: 0;
             padding: 20px;
         }
-        /* עיצוב התראה שדומה יותר להתראת דחיפה (Push) בנייד */
         #fake-notification {
             position: fixed;
             top: -100px;
@@ -28,7 +27,7 @@
             text-align: right;
             transition: top 0.4s ease-out;
             z-index: 1000;
-            border-left: 5px solid #25D366; /* פס ירוק קטן כדי לרמוז על ווטסאפ */
+            border-left: 5px solid #25D366;
         }
         .container {
             max-width: 400px;
@@ -78,7 +77,6 @@ for (let i = 1; i <= 52; i++) {
     selectEl.appendChild(option);
 }
 
-// קובץ אודיו של צליל התראה קלאסי של אייפון
 const iphoneSound = new Audio('https://www.myinstants.com/media/sounds/iphone-sms.mp3');
 
 function calculateAndNotify() {
@@ -90,32 +88,30 @@ function calculateAndNotify() {
         return;
     }
 
-    // חישוב כמות הקלפים להורדה מראש החבילה
     let cutAmount = (cardStackPos - targetNum + 52) % 52;
-    
-    // איתור קלף המפתח אליו צריך לחתוך (הקלף שיהיה בתחתית החבילה)
     let cutCardIndex = cutAmount === 0 ? 52 : cutAmount;
     let cutCardName = mnemonica[cutCardIndex];
 
-    // שחרור נעילת הסאונד של הדפדפן (חובה באייפונים כדי שהצליל יעבוד אחרי השהיה)
-    iphoneSound.load();
+    // טריק לשחרור החסימה של הסאונד - הפעלה ועצירה מיידית
+    iphoneSound.play().then(() => {
+        iphoneSound.pause();
+        iphoneSound.currentTime = 0;
+    }).catch(e => console.log("Init blocked by browser"));
 
-    // הטיימר: מחכה 5 שניות (5000 מילי-שניות) לפני הביצוע
+    // השהיה של 3 שניות (3000 מילי-שניות) במקום 5
     setTimeout(() => {
-        // הפעלת הצליל
-        iphoneSound.play().catch(e => console.log("Sound blocked:", e));
+        
+        iphoneSound.play().catch(e => alert("ודא שהטלפון לא על מצב שקט."));
 
-        // בניית ההודעה: למשל "3 - 7 יהלום"
         const notification = document.getElementById('fake-notification');
         notification.innerText = "WhatsApp: " + cutAmount + " - " + cutCardName;
         notification.style.top = "20px";
 
-        // העלמת ההודעה אחרי 5 שניות נוספות
         setTimeout(() => {
             notification.style.top = "-100px";
         }, 5000);
         
-    }, 5000); 
+    }, 3000); 
 }
 </script>
 
