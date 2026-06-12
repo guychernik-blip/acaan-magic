@@ -60,7 +60,7 @@
     <label>מספר נבחר (1-52):</label>
     <input type="number" id="target-number" placeholder="לדוגמה: 22">
 
-    <button onclick="calculateAndNotify()">שגר חישוב</button>
+    <button id="calc-btn">שגר חישוב</button>
 </div>
 
 <script>
@@ -77,9 +77,20 @@ for (let i = 1; i <= 52; i++) {
     selectEl.appendChild(option);
 }
 
-const iphoneSound = new Audio('https://www.myinstants.com/media/sounds/iphone-sms.mp3');
+// שימוש ב-Web Audio API לעקיפת חסימות סאונד בדפדפנים בנייד
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioBuffer;
 
-function calculateAndNotify() {
+// טעינת צליל האייפון מראש לתוך הזיכרון
+fetch('https://www.myinstants.com/media/sounds/iphone-sms.mp3')
+    .then(response => response.arrayBuffer())
+    .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+    .then(decodedAudio => {
+        audioBuffer = decodedAudio;
+    })
+    .catch(error => console.error("שגיאה בטעינת קובץ האודיו:", error));
+
+document.getElementById('calc-btn').addEventListener('click', function() {
     const cardStackPos = parseInt(selectEl.value);
     const targetNum = parseInt(document.getElementById('target-number').value);
 
@@ -88,31 +99,38 @@ function calculateAndNotify() {
         return;
     }
 
+    // שחרור ההשתקה של מנוע האודיו בלחיצת המשתמש
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
     let cutAmount = (cardStackPos - targetNum + 52) % 52;
     let cutCardIndex = cutAmount === 0 ? 52 : cutAmount;
     let cutCardName = mnemonica[cutCardIndex];
 
-    // טריק לשחרור החסימה של הסאונד - הפעלה ועצירה מיידית
-    iphoneSound.play().then(() => {
-        iphoneSound.pause();
-        iphoneSound.currentTime = 0;
-    }).catch(e => console.log("Init blocked by browser"));
-
-    // השהיה של 3 שניות (3000 מילי-שניות) במקום 5
+    // השהיה של 8 שניות (8000 מילי-שניות)
     setTimeout(() => {
         
-        iphoneSound.play().catch(e => alert("ודא שהטלפון לא על מצב שקט."));
+        // יצירת ערוץ והשמעת הצליל מהזיכרון
+        if (audioBuffer) {
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
 
+        // הקפצת ההודעה
         const notification = document.getElementById('fake-notification');
         notification.innerText = "WhatsApp: " + cutAmount + " - " + cutCardName;
         notification.style.top = "20px";
 
+        // העלמת ההודעה אחרי 5 שניות
         setTimeout(() => {
             notification.style.top = "-100px";
         }, 5000);
         
-    }, 3000); 
-}
+    }, 8000);
+});
 </script>
 
 </body>
